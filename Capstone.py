@@ -6,6 +6,7 @@ import pandas as pd
 import time
 import datetime
 import streamlit as st
+import re
 
 #API Collection
 def API_Connect():
@@ -359,7 +360,7 @@ def Videos():
                                                          Thumbnail varchar(200),
                                                          Description text,
                                                          PublishedAt text,
-                                                         Duration interval,
+                                                         Duration time,
                                                          Views bigint,
                                                          Likes bigint,
                                                          Comments int,
@@ -370,6 +371,28 @@ def Videos():
                                                            
     cursor.execute(query1)
     sqlconnection.commit()
+
+    Videos_list=[]
+    db=connection["Youtube_Data"]
+    collection = db["Channel Informations"]
+    for vi_data in collection.find({},{"_id":0,"Video Details":1}):
+        for i in range(len(vi_data['Video Details'])):
+            Videos_list.append(vi_data['Video Details'][i])
+    df2=pd.DataFrame(Videos_list)
+
+    def convert_duration(duration):
+        time_pattern = re.compile(r'PT(\d+H)?(\d+M)?(\d+S)?')
+        match = time_pattern.match(duration)
+        if match:
+            hours = int(match.group(1)[0:-1]) if match.group(1) else 0
+            minutes = int(match.group(2)[0:-1]) if match.group(2) else 0
+            seconds = int(match.group(3)[0:-1]) if match.group(3) else 0
+            return f"{hours:02}:{minutes:02}:{seconds:02}"
+        else:
+            return None
+
+    df2['Duration'] = df2['Duration'].astype(str)  # Convert to string format
+    df2['Duration'] = df2['Duration'].apply(convert_duration)
     
     for i,r in df2.iterrows():
         query2='''insert into Channel_Videos(Channel_Name,
@@ -546,7 +569,7 @@ elif question=="Which channels have the most number of videos, and how many vide
     for data in cursor.fetchall():
         ques2_data.append(data)
     pd.DataFrame(ques2_data)
-    fd2=pd.DataFrame(ques2_data,columns=["Video_Title","Channel_Name"])
+    fd2=pd.DataFrame(ques2_data,columns=["Channel_Name","Total_Videos"])
     st.write(fd2)
 
 #question3
@@ -558,7 +581,7 @@ elif question=="What are the top 10 most viewed videos and their respective chan
     for data in cursor.fetchall():
         ques3_data.append(data)
     pd.DataFrame(ques3_data)
-    fd3=pd.DataFrame(ques3_data,columns=["Video_Title","Channel_Name"])
+    fd3=pd.DataFrame(ques3_data,columns=["Views","Channel_Name","Video_Title"])
     st.write(fd3)
 
 #question4
@@ -569,7 +592,7 @@ elif question=="How many comments were made on each video, and what are their co
     for data in cursor.fetchall():
         ques4_data.append(data)
     pd.DataFrame(ques4_data)
-    fd4=pd.DataFrame(ques4_data,columns=["Video_Title","Channel_Name"])
+    fd4=pd.DataFrame(ques4_data,columns=["Number of Comments","Video_Title"])
     st.write(fd4)
 
 #question5
@@ -580,8 +603,8 @@ elif question=="Which videos have the highest number of likes, and what are thei
     for data in cursor.fetchall():
         ques5_data.append(data)
     pd.DataFrame(ques5_data)
-    fd5=pd.DataFrame(ques5_data,columns=["Video_Title","Channel_Name"])
-    st.write(fd5)  
+    fd5=pd.DataFrame(ques5_data,columns=["Video_Title","Channel_Name","Likes"])
+    st.write(fd5) 
 
 #question6
 elif question=="What is the total number of likes and dislikes for each video, and what are their corresponding video names?":
@@ -591,7 +614,7 @@ elif question=="What is the total number of likes and dislikes for each video, a
     for data in cursor.fetchall():
         ques6_data.append(data)
     pd.DataFrame(ques6_data)
-    fd6=pd.DataFrame(ques6_data,columns=["Video_Title","Channel_Name"])
+    fd6=pd.DataFrame(ques6_data,columns=["Likes","Video_Title"])
     st.write(fd6)
 
 #question7
@@ -602,7 +625,7 @@ elif question=="What is the total number of views for each channel, and what are
     for data in cursor.fetchall():
         ques7_data.append(data)
     pd.DataFrame(ques7_data)
-    fd7=pd.DataFrame(ques7_data,columns=["Video_Title","Channel_Name"])
+    fd7=pd.DataFrame(ques7_data,columns=["Channel_Name","Views"])
     st.write(fd7)
 
 #question8
@@ -614,8 +637,25 @@ elif question=="What are the names of all the channels that have published video
     for data in cursor.fetchall():
         ques8_data.append(data)
     pd.DataFrame(ques8_data)
-    fd8=pd.DataFrame(ques8_data,columns=["Video_Title","Channel_Name"])
+    fd8=pd.DataFrame(ques8_data,columns=["Video_Title","Published At","Channel_Name"])
     st.write(fd8)
+
+#question9
+elif question == "What is the average duration of all videos in each channel, and what are their corresponding channel names?":
+    ques9 =  "SELECT Channel_Name as ChannelName, AVG(Duration) AS average_duration FROM Channel_Videos GROUP BY Channel_Name;"
+    cursor.execute(ques9)
+    ques9_data=[]
+    for data in cursor.fetchall():
+        ques9_data.append(data)
+    pd.DataFrame(ques9_data)
+    fd9=pd.DataFrame(ques9_data,columns=["Channel_Name","Average_Duration"])
+    T9=[]
+    for index, row in fd9.iterrows():
+        channel_title = row['Channel_Name']
+        average_duration = row['Average_Duration']
+        average_duration_str = str(average_duration)
+        T9.append({"Channel_Name": channel_title ,  "Average Duration": average_duration_str})
+    st.write(pd.DataFrame(T9))    
 
 #question10
 elif question=="Which videos have the highest number of comments, and what are their corresponding channel names?":
@@ -625,6 +665,6 @@ elif question=="Which videos have the highest number of comments, and what are t
     for data in cursor.fetchall():
         ques10_data.append(data)
     pd.DataFrame(ques10_data)
-    fd11=pd.DataFrame(ques10_data,columns=["Video_Title","Channel_Name"])
-    st.write(fd11)   
+    fd10=pd.DataFrame(ques10_data,columns=["Video_Title","Channel_Name","No.of Comments"])
+    st.write(fd10)
 
