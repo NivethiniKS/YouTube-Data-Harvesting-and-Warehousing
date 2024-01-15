@@ -11,7 +11,7 @@
 #### API integration
 #### Data Management using MongoDB (Atlas) and SQL
 ## About this Project
-#### This is a Web Application based on Python - Streamlit which uses Google YouTube API to extract information about any given YouTube channel. It then stores the extracted data in MongoDb and migrates the selected channel data to PostgreSQL Data Warehouse for processing queries to retrieve the results needed.
+#### This is a Web Application based on Python - Streamlit which uses Google YouTube API to extract information about any given YouTube channel. It then stores the extracted data in MongoDb and migrates the selected channel data to MySQL Data Warehouse for processing queries to retrieve the results needed.
 
 
 
